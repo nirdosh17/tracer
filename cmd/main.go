@@ -3,16 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"sync"
 
 	"github.com/nirdosh17/tracer"
 )
 
-// go run cmd/main.go -hops 20 -timeout 120 google.com
+// go run cmd/main.go -hops 5 google.com
 func main() {
 	hops := flag.Int("hops", 64, "max hops(TTL) for the packet, default: 64")
-	timeout := flag.Int("timeout", 100, "timeout(ms) for ICMP response, default: 100")
+	timeout := flag.Int("timeout", 5, "timeout(seconds) for ICMP response, default: 5")
 	flag.Parse()
 
 	host := flag.Arg(0)
@@ -20,6 +21,9 @@ func main() {
 		fmt.Println("no host provided!")
 		os.Exit(1)
 	}
+
+	addr, _ := net.ResolveIPAddr("ip", host)
+	fmt.Printf("tracing %v (%v), %v hops max\n", host, addr.String(), *hops)
 
 	// consume live hops from channel
 	var wg sync.WaitGroup
@@ -34,15 +38,22 @@ func main() {
 				wg.Done()
 				return
 			}
-			fmt.Println("received hop", hop)
+			printHop(hop)
 		}
 	}()
 
 	config := tracer.NewConfig().WithHops(*hops).WithTimeout(*timeout)
 	t := tracer.NewTracer(config)
-	err := t.Run(host, c)
-	if err != nil {
-		fmt.Println("Error from Trace runner: ", err)
-	}
+	trace, err := t.Run(host, c)
 	wg.Wait()
+
+	if err != nil {
+		fmt.Println("Error from tracer: ", err)
+	} else {
+		fmt.Println("Total Round Trip Time:", trace.RoundTripTime)
+	}
+}
+
+func printHop(hop tracer.Hop) {
+	fmt.Printf("%v.   %v    %v    %v\n", hop.TTL, hop.Addr, hop.Location, hop.ElapsedTime.String())
 }

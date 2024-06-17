@@ -1,19 +1,19 @@
 package tracer
 
 const (
-	DEFAULT_HOPS       = 64
-	DEFAULT_TIMEOUT_MS = 100
+	DEFAULT_HOPS            = 64
+	DEFAULT_TIMEOUT_SECONDS = 5
 )
 
 type TracerConfig struct {
-	MaxHops   int
-	TimeoutMs int
+	MaxHops        int
+	TimeoutSeconds int
 }
 
 func NewConfig() *TracerConfig {
 	return &TracerConfig{
-		MaxHops:   DEFAULT_HOPS,
-		TimeoutMs: DEFAULT_TIMEOUT_MS,
+		MaxHops:        DEFAULT_HOPS,
+		TimeoutSeconds: DEFAULT_TIMEOUT_SECONDS,
 	}
 }
 
@@ -25,10 +25,10 @@ func (t *TracerConfig) Hops() int {
 }
 
 func (t *TracerConfig) Timeout() int {
-	if t.TimeoutMs == 0 {
-		t.TimeoutMs = DEFAULT_TIMEOUT_MS
+	if t.TimeoutSeconds == 0 {
+		t.TimeoutSeconds = DEFAULT_TIMEOUT_SECONDS
 	}
-	return t.TimeoutMs
+	return t.TimeoutSeconds
 }
 
 func (t *TracerConfig) WithHops(h int) *TracerConfig {
@@ -37,6 +37,6 @@ func (t *TracerConfig) WithHops(h int) *TracerConfig {
 }
 
 func (t *TracerConfig) WithTimeout(to int) *TracerConfig {
-	t.TimeoutMs = to
+	t.TimeoutSeconds = to
 	return t
 }
