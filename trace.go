@@ -2,7 +2,6 @@ package tracer
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"syscall"
 	"time"
@@ -20,6 +19,7 @@ type Tracer struct {
 }
 
 type Hop struct {
+	// this should be host or IP address
 	Addr     string
 	Location string
 	// current ttl(hops) of the packet
@@ -52,7 +52,24 @@ func (t Tracer) Run(host string, traces chan Hop) (NetworkTrace, error) {
 	}
 
 	roundTripStart := time.Now()
-	for ttl := 1; ttl <= t.Config.MaxHops; ttl++ {
+	ttl := 1
+	retries := 0
+
+	for {
+		if ttl > t.Config.MaxHops {
+			break
+		}
+
+		if retries >= t.Config.MaxRetries {
+			hop := Hop{TTL: ttl, Addr: "*", Location: "*"}
+			traces <- hop
+			nHops = append(nHops, hop)
+
+			retries = 0
+			ttl += 1
+			continue
+		}
+
 		// using different UDP port each time
 		port := UDPStartPort + ttl
 		addr := fmt.Sprintf("%s:%d", destIP, port)
@@ -61,41 +78,41 @@ func (t Tracer) Run(host string, traces chan Hop) (NetworkTrace, error) {
 		err = t.sendUDPPacket(addr, ttl)
 		if err != nil {
 			fmt.Printf("Error sending UDP packet: %s\n", err)
+			retries += 1
 			continue
 		}
 
 		recv, err := t.listenICMPMessages()
 		if err != nil {
-			fmt.Printf("Error listening for ICMP replies: %s\n", err)
+			// fmt.Printf("Error listening for ICMP replies: %s\n", err)
+			retries += 1
 			continue
 		}
 		elapsedTime := time.Since(now)
 
-		// TODO: find out why this is nil
-		if recv.packetAddr == nil {
-			continue
-		}
-
 		packetAddr := recv.packetAddr.String()
 		if recv.destIP == destIP.IP.String() {
-			loc := locateIP(packetAddr)
 			hop := Hop{
 				TTL:         ttl,
 				Addr:        packetAddr,
-				Location:    fmt.Sprintf("%v (%v)", loc.Country, loc.Org),
+				Location:    locateIP(packetAddr),
 				ElapsedTime: elapsedTime,
 			}
 
 			// push to channel for live updates
 			traces <- hop
-
 			nHops = append(nHops, hop)
+			// reset retry for next operation
+			retries = 0
 		}
 
 		if packetAddr == recv.destIP {
 			break
 		}
+
+		ttl += 1
 	}
+
 	nTrace.RoundTripTime = time.Since(roundTripStart)
 	nTrace.NetworkHops = nHops
 
@@ -137,10 +154,10 @@ func (t Tracer) sendUDPPacket(addr string, ttl int) error {
 		return err
 	}
 
-	// Sending a UDP packet with dummy payload. Why?
+	// Sending UDP packet with a null byte in the payload. it's size will be 1 byte
 	// - actual content in payload sent in the UDP packet does not affect traceroute operation
-	// - primary purpose of payload is to generate ICMP responses at each hop
-	_, err = conn.Write([]byte("HI"))
+	// - we can also send empty payload
+	_, err = conn.Write([]byte{0x00})
 	return err
 }
 
@@ -163,8 +180,7 @@ func (t Tracer) listenICMPMessages() (icmpResp, error) {
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 				// after finishing reading from connection, it will timeout in the next loop when there is nothing to read
 				// so not need to log error message
-				// fmt.Println("Request timed out.", err)
-				return defaultResp, nil
+				return defaultResp, err
 			}
 			return defaultResp, err
 		}
@@ -174,16 +190,13 @@ func (t Tracer) listenICMPMessages() (icmpResp, error) {
 			return defaultResp, nil
 		}
 
-		switch icmpMsg.icmpType {
-		case ipv4.ICMPTypeTimeExceeded, ipv4.ICMPTypeDestinationUnreachable:
+		// other message types like 'ICMP Echo Reply' are ignored
+		if icmpMsg.icmpType == ipv4.ICMPTypeTimeExceeded || icmpMsg.icmpType == ipv4.ICMPTypeDestinationUnreachable {
+			// TODO: filter out ICMP packets from another source
 			icmpMsg.packetAddr = receivedFrom
 			return icmpMsg, nil
-		default:
-			log.Printf("got %+v; want echo reply", icmpMsg.icmpType)
-			return defaultResp, nil
 		}
 	}
-
 }
 
 type icmpResp struct {

@@ -14,6 +14,8 @@ import (
 func main() {
 	hops := flag.Int("hops", 64, "max hops(TTL) for the packet, default: 64")
 	timeout := flag.Int("timeout", 5, "timeout(seconds) for ICMP response, default: 5")
+	retries := flag.Int("retries", 2, "timeout(seconds) for ICMP response, default: 2")
+
 	flag.Parse()
 
 	host := flag.Arg(0)
@@ -23,7 +25,7 @@ func main() {
 	}
 
 	addr, _ := net.ResolveIPAddr("ip", host)
-	fmt.Printf("tracing %v (%v), %v hops max\n", host, addr.String(), *hops)
+	fmt.Printf("tracing %v (%v), %v hops max, max retries: %v\n", host, addr.String(), *hops, *retries)
 
 	// consume live hops from channel
 	var wg sync.WaitGroup
@@ -44,16 +46,18 @@ func main() {
 
 	config := tracer.NewConfig().WithHops(*hops).WithTimeout(*timeout)
 	t := tracer.NewTracer(config)
-	trace, err := t.Run(host, c)
+	_, err := t.Run(host, c)
 	wg.Wait()
 
 	if err != nil {
 		fmt.Println("Error from tracer: ", err)
-	} else {
-		fmt.Println("Total Round Trip Time:", trace.RoundTripTime)
 	}
 }
 
 func printHop(hop tracer.Hop) {
-	fmt.Printf("%v.   %v    %v    %v\n", hop.TTL, hop.Addr, hop.Location, hop.ElapsedTime.String())
+	et := hop.ElapsedTime.String()
+	if hop.ElapsedTime == 0 {
+		et = "*"
+	}
+	fmt.Printf("%v.   %v    %v    %v\n", hop.TTL, hop.Addr, hop.Location, et)
 }
