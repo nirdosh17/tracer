@@ -8,7 +8,7 @@ before:
 builds:
   - main: ./cmd
     # binary name
-    binary: tracer
+    binary: gotrace
     env:
       - CGO_ENABLED=0
     goos:
