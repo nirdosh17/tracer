@@ -6,7 +6,7 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd
+  - main: ./cmd/gotrace
     # binary name
     binary: gotrace
     env:
