@@ -5,16 +5,11 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 
 ## [Usage](https://pkg.go.dev/github.com/nirdosh17/tracer)
 
-### Options
-|                     |                 Details                    |  Default Value   |
-|---------------------|--------------------------------------------|------------------|
-|   `MaxHops`         | max network hops to trace the packet route |        64        |
-|   `TimeoutSeconds`  | UDP call & ICMP response wait time         |        5         |
-|   `MaxRetries`      | retrying UDP/ICMP with same TTL(hop)       |        2         |
-
-
 ### 1. CLI
-  Download `gotrace` binary from [HERE](https://github.com/nirdosh17/tracer/releases).
+  ```bash
+  go install github.com/nirdosh17/cmd/gotrace@latest
+  ```
+  _You can find the binaries [HERE](https://github.com/nirdosh17/tracer/releases/latest)._
 
   **Examples:**
   ```bash
@@ -31,28 +26,16 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
   gotrace -help
   ```
 
-  **Find public IP:**
-  ```
-  $ gotrace myip
-  Your Public IP:
-  101.12.38.5 | ISP Name Pvt. Ltd (France)
-  ```
+  **Get public IP:**
+
+  ![Get IP](https://github.com/nirdosh17/tracer/assets/5920689/2fa173d2-5b8c-4fb3-841b-d0c2cadaf08a)
 
   **Trace route:**
-  ```bash
-  $ sudo gotrace route example.com
-  tracing example.com (93.184.215.14), 64 hops max, max retries: 2
-  1.   192.168.101.1    private range    12.023833ms
-  2.   62.115.42.118    Arelion Sweden AB (France)    178.632ms
-  3.   62.115.122.159    TELIANET (United States)    281.884917ms
-  4.   62.115.123.125    TELIANET (United States)    305.271958ms
-  5.   62.115.175.71    Arelion Sweden AB (United States)    277.827958ms
-  6.   152.195.64.153    Edgecast Inc. (United States)    276.270542ms
-  7.   93.184.215.14    Edgecast Inc. (United Kingdom)    305.162792ms
-  ```
+
+  ![Traceroute](https://github.com/nirdosh17/tracer/assets/5920689/7429ca7c-9b2b-4691-8aec-e22ddc5dc858)
 
 
-### 2. Package
+### 2. Use as a lib
   Install Package:
   ```bash
   go get github.com/nirdosh17/tracer
