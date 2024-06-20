@@ -7,7 +7,7 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 
 ### 1. CLI
   ```bash
-  go install github.com/nirdosh17/cmd/gotrace@latest
+  go install github.com/nirdosh17/tracer/cmd/gotrace@latest
   ```
   _You can find the binaries [HERE](https://github.com/nirdosh17/tracer/releases/latest)._
 
