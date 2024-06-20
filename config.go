@@ -1,9 +1,9 @@
 package tracer
 
 const (
-	DEFAULT_HOPS            = 64
-	DEFAULT_TIMEOUT_SECONDS = 5
-	DEFAULT_MAX_RETRIES     = 2
+	DEFAULT_HOPS            int = 64
+	DEFAULT_TIMEOUT_SECONDS int = 5
+	DEFAULT_MAX_RETRIES     int = 2
 )
 
 type TracerConfig struct {

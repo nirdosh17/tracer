@@ -6,29 +6,41 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 ## [Usage](https://pkg.go.dev/github.com/nirdosh17/tracer)
 
 ### Options
-|                   |                 Details                    |  Default Value   |
-|-------------------|--------------------------------------------|------------------|
+|                     |                 Details                    |  Default Value   |
+|---------------------|--------------------------------------------|------------------|
 |   `MaxHops`         | max network hops to trace the packet route |        64        |
 |   `TimeoutSeconds`  | UDP call & ICMP response wait time         |        5         |
 |   `MaxRetries`      | retrying UDP/ICMP with same TTL(hop)       |        2         |
 
 
 ### 1. CLI
-  Download binary from [HERE](https://github.com/nirdosh17/tracer/releases).
+  Download `gotrace` binary from [HERE](https://github.com/nirdosh17/tracer/releases).
 
-  **Run command with previleged access:**
+  **Examples:**
   ```bash
-  sudo ./tracer example.com
+  # tracing requires privileged access
+  sudo gotrace example.com
 
-  # with options
-  sudo ./tracer -hops 5 -timeout 2 example.com
+  # with options (max hops, timeout, retries)
+  sudo gotrace -hops 5 -t 5 -r 5 example.com
 
-  # view options
-  ./tracer -help
+  # get your public ip
+  gotrace myip
+
+  # view command details
+  gotrace -help
   ```
 
-  **Sample output:**
+  **Find public IP:**
+  ```
+  $ gotrace myip
+  Your Public IP:
+  101.12.38.5 | ISP Name Pvt. Ltd (France)
+  ```
+
+  **Trace route:**
   ```bash
+  $ sudo gotrace route example.com
   tracing example.com (93.184.215.14), 64 hops max, max retries: 2
   1.   192.168.101.1    private range    12.023833ms
   2.   62.115.42.118    Arelion Sweden AB (France)    178.632ms

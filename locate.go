@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+
+	"github.com/pion/stun"
 )
 
 // check available fields here: https://ip-api.com/#8.8.8.8
@@ -42,4 +45,42 @@ func locateIP(ip string) string {
 	}
 
 	return fmt.Sprintf("%v (%v)", geo.Isp, geo.Country)
+}
+
+func PublicIP() (string, error) {
+	var pubIP net.IP
+	var stunErr error
+
+	u, err := stun.ParseURI("stun:stun.l.google.com:19302")
+	if err != nil {
+		return "", err
+	}
+
+	// Creating a "connection" to STUN server.
+	c, err := stun.DialURI(u, &stun.DialConfig{})
+	if err != nil {
+		return "", err
+	}
+
+	// Building binding request with random transaction id.
+	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
+	// Sending request to STUN server, waiting for response message.
+	if err := c.Do(message, func(res stun.Event) {
+		if res.Error != nil {
+			stunErr = res.Error
+			return
+		}
+		// Decoding XOR-MAPPED-ADDRESS attribute from message.
+		var xorAddr stun.XORMappedAddress
+		if err := xorAddr.GetFrom(res.Message); err != nil {
+			stunErr = res.Error
+			return
+		}
+		pubIP = xorAddr.IP
+
+	}); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%v | %v", pubIP, locateIP(pubIP.String())), stunErr
 }
