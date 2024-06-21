@@ -107,7 +107,7 @@ func traceRoute(host string, hops, retries, timeout *int) {
 				wg.Done()
 				return
 			}
-			printHop(hop)
+			hop.Print()
 		}
 	}()
 
@@ -120,12 +120,4 @@ func traceRoute(host string, hops, retries, timeout *int) {
 		fmt.Printf("failed to trace route for %v: %v\n", host, err)
 		os.Exit(1)
 	}
-}
-
-func printHop(hop tracer.Hop) {
-	et := hop.ElapsedTime.String()
-	if hop.ElapsedTime == 0 {
-		et = "*"
-	}
-	fmt.Printf("%v.   %v    %v    %v\n", hop.TTL, hop.Addr, hop.Location, et)
 }

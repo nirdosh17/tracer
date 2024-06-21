@@ -76,6 +76,7 @@ func PublicIP() (string, error) {
 			stunErr = res.Error
 			return
 		}
+		// TODO: this sometimes returns ipv6 address, either print just ipv4 or print both
 		pubIP = xorAddr.IP
 
 	}); err != nil {
