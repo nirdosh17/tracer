@@ -18,6 +18,10 @@ type Tracer struct {
 	Config *TracerConfig
 }
 
+func NewTracer(c *TracerConfig) *Tracer {
+	return &Tracer{Config: c}
+}
+
 type Hop struct {
 	// this should be host or IP address
 	Addr     string
@@ -28,8 +32,12 @@ type Hop struct {
 	ElapsedTime time.Duration
 }
 
-func NewTracer(c *TracerConfig) *Tracer {
-	return &Tracer{Config: c}
+func (h Hop) Print() {
+	et := h.ElapsedTime.Round(time.Microsecond).String()
+	if h.ElapsedTime == 0 {
+		et = "*"
+	}
+	fmt.Printf("%v.   %v    %v    %v\n", h.TTL, h.Addr, h.Location, et)
 }
 
 type NetworkTrace struct {
@@ -205,7 +213,7 @@ type icmpResp struct {
 	packetAddr  net.Addr
 	icmpType    icmp.Type
 	requesterIP string
-	// we are only interested in ICMP packets which were send to this IP
+	// we are only interested in ICMP packets which were sent to this IP
 	// but they might not have reached to this destination due to small TTL
 	destIP string
 }

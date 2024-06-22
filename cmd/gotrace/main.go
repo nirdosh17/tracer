@@ -67,13 +67,15 @@ func main() {
 		traceRoute(host, hops, retries, timeout)
 
 	case "myip":
-		pubIP, err := tracer.PublicIP()
+		pubIPv4, pubIPv6, loc, err := tracer.PublicIP()
 		if err != nil {
 			fmt.Println("failed to fetch your public ip:", err)
 			os.Exit(1)
 		}
 		fmt.Println("Your Public IP:")
-		fmt.Println(pubIP)
+		fmt.Println("IPv4:", pubIPv4)
+		fmt.Println("IPv6:", pubIPv6)
+		fmt.Println(loc)
 
 	case "-h", "-help":
 		flag.Usage()
@@ -107,7 +109,7 @@ func traceRoute(host string, hops, retries, timeout *int) {
 				wg.Done()
 				return
 			}
-			printHop(hop)
+			hop.Print()
 		}
 	}()
 
@@ -120,12 +122,4 @@ func traceRoute(host string, hops, retries, timeout *int) {
 		fmt.Printf("failed to trace route for %v: %v\n", host, err)
 		os.Exit(1)
 	}
-}
-
-func printHop(hop tracer.Hop) {
-	et := hop.ElapsedTime.String()
-	if hop.ElapsedTime == 0 {
-		et = "*"
-	}
-	fmt.Printf("%v.   %v    %v    %v\n", hop.TTL, hop.Addr, hop.Location, et)
 }
