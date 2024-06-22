@@ -67,15 +67,11 @@ func main() {
 		traceRoute(host, hops, retries, timeout)
 
 	case "myip":
-		pubIPv4, pubIPv6, loc, err := tracer.PublicIP()
-		if err != nil {
-			fmt.Println("failed to fetch your public ip:", err)
-			os.Exit(1)
-		}
-		fmt.Println("Your Public IP:")
-		fmt.Println("IPv4:", pubIPv4)
-		fmt.Println("IPv6:", pubIPv6)
-		fmt.Println(loc)
+		pubIPv4, pubIPv6, loc := tracer.PublicIP()
+		fmt.Println("--- Your Public IP ---")
+		fmt.Println("IPv4 - ", pubIPv4)
+		fmt.Println("IPv6 - ", pubIPv6)
+		fmt.Println(" Org - ", loc)
 
 	case "-h", "-help":
 		flag.Usage()

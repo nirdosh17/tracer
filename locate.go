@@ -2,10 +2,8 @@ package tracer
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -51,7 +49,7 @@ func locateIP(ip string) string {
 }
 
 // PublicIP returns IPv4, Ipv6 and location of the caller
-func PublicIP() (string, string, string, error) {
+func PublicIP() (string, string, string) {
 	var v4, v6 string
 	var v4Err, v6Err error
 
@@ -67,11 +65,15 @@ func PublicIP() (string, string, string, error) {
 	}()
 
 	wg.Wait()
-	if v4Err != nil || v6Err != nil {
-		return "", "", "", errors.Join(v4Err, v6Err)
+
+	if v4Err != nil && v4 == "" {
+		v4 = "N/A"
+	}
+	if v6Err != nil && v6 == "" {
+		v6 = "N/A"
 	}
 
-	return v4, v6, locateIP(v4), nil
+	return v4, v6, locateIP(v4)
 }
 
 // protocol = udp4, udp6
@@ -85,14 +87,14 @@ func stunRequest(protocol string) (string, error) {
 
 	conn, err := net.DialUDP(protocol, nil, serverAddr)
 	if err != nil {
-		log.Fatalf("failed to dial STUN server: %v", err)
+		return "", fmt.Errorf("failed to dial STUN server: %v", err)
 	}
 	defer conn.Close()
 
 	// Create a new STUN client
 	c, err := stun.NewClient(conn)
 	if err != nil {
-		log.Fatalf("failed to create STUN client: %v", err)
+		return "", fmt.Errorf("failed to create STUN client: %v", err)
 	}
 	defer c.Close()
 
