@@ -28,7 +28,7 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 
   **Get public IP:**
 
-  ![Get IP](https://github.com/nirdosh17/tracer/assets/5920689/2fa173d2-5b8c-4fb3-841b-d0c2cadaf08a)
+  ![Get IP](https://github.com/nirdosh17/tracer/assets/5920689/863aef4e-996f-4c37-9386-2203f7576930)
 
   **Trace route:**
 
