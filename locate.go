@@ -2,10 +2,13 @@ package tracer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/pion/stun"
 )
@@ -47,20 +50,51 @@ func locateIP(ip string) string {
 	return fmt.Sprintf("%v (%v)", geo.Isp, geo.Country)
 }
 
-func PublicIP() (string, error) {
+// PublicIP returns IPv4, Ipv6 and location of the caller
+func PublicIP() (string, string, string, error) {
+	var v4, v6 string
+	var v4Err, v6Err error
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		v4, v4Err = stunRequest("udp4")
+		wg.Done()
+	}()
+	go func() {
+		v6, v6Err = stunRequest("udp6")
+		wg.Done()
+	}()
+
+	wg.Wait()
+	if v4Err != nil || v6Err != nil {
+		return "", "", "", errors.Join(v4Err, v6Err)
+	}
+
+	return v4, v6, locateIP(v4), nil
+}
+
+// protocol = udp4, udp6
+func stunRequest(protocol string) (string, error) {
 	var pubIP net.IP
 	var stunErr error
-
-	u, err := stun.ParseURI("stun:stun.l.google.com:19302")
+	serverAddr, err := net.ResolveUDPAddr(protocol, "stun.l.google.com:19302")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to resolve STUN server address: %v", err)
 	}
 
-	// Creating a "connection" to STUN server.
-	c, err := stun.DialURI(u, &stun.DialConfig{})
+	conn, err := net.DialUDP(protocol, nil, serverAddr)
 	if err != nil {
-		return "", err
+		log.Fatalf("failed to dial STUN server: %v", err)
 	}
+	defer conn.Close()
+
+	// Create a new STUN client
+	c, err := stun.NewClient(conn)
+	if err != nil {
+		log.Fatalf("failed to create STUN client: %v", err)
+	}
+	defer c.Close()
 
 	// Building binding request with random transaction id.
 	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
@@ -76,12 +110,12 @@ func PublicIP() (string, error) {
 			stunErr = res.Error
 			return
 		}
-		// TODO: this sometimes returns ipv6 address, either print just ipv4 or print both
+		// could be IPv4 or IPv6 depending on the protocol
 		pubIP = xorAddr.IP
 
 	}); err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v | %v", pubIP, locateIP(pubIP.String())), stunErr
+	return pubIP.String(), stunErr
 }
