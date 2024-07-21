@@ -26,14 +26,14 @@ Usage:
 Examples:
 
 	# trace with default settings, max hops: ` + fmt.Sprintf("%v", tracer.DEFAULT_HOPS) + `, timeout(seconds): ` + fmt.Sprintf("%v", tracer.DEFAULT_TIMEOUT_SECONDS) + `, retries: ` + fmt.Sprintf("%v", tracer.DEFAULT_MAX_RETRIES) + `
-	` + colorGreen + `gotrace google.com` + colorReset + `
+	` + colorGreen + `sudo gotrace route google.com` + colorReset + `
 
 	# trace 'n' number of hops
-	` + colorGreen + `gotrace -hops 10 example.com` + colorReset + `
+	` + colorGreen + `sudo gotrace route -hops 10 example.com` + colorReset + `
 
 	# if you are receiving blank response
 	# try increasing the ICMP response timeout(-t) and retries(-r)
-	` + colorGreen + `gotrace -t 10 -r 5 example.com` + colorReset + `
+	` + colorGreen + `sudo gotrace route -t 10 -r 5 example.com` + colorReset + `
 
 	# get your public ip
 	` + colorGreen + `gotrace myip` + colorReset + `
