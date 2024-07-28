@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
 	"sync"
 
 	"github.com/nirdosh17/tracer"
@@ -15,8 +16,8 @@ var colorGreen = "\033[32m"
 var usage = `
 Usage:
 
-	1. Tracing route requires privileged access to work with raw ICMP packets.
-	Make sure to run the command as administrator.
+	1. Tracing route requires privileged access to analyze raw ICMP packets.
+	   Make sure to run the command as administrator.
 
 		` + colorGreen + `sudo gotrace route [-hops] [-timeout] host` + colorReset + `
 
@@ -35,8 +36,11 @@ Examples:
 	# try increasing the ICMP response timeout(-t) and retries(-r)
 	` + colorGreen + `sudo gotrace route -t 10 -r 5 example.com` + colorReset + `
 
-	# get your public ip
+	# get your public ipv4 address with ipv6 and location
 	` + colorGreen + `gotrace myip` + colorReset + `
+
+	# get ipv4 address only
+	` + colorGreen + `gotrace myip --ipv4` + colorReset + `
 `
 
 func main() {
@@ -44,6 +48,8 @@ func main() {
 	hops := routeCmd.Int("hops", tracer.DEFAULT_HOPS, "")
 	timeout := routeCmd.Int("t", tracer.DEFAULT_TIMEOUT_SECONDS, "")
 	retries := routeCmd.Int("r", tracer.DEFAULT_MAX_RETRIES, "")
+
+	myipCmd := flag.NewFlagSet("myip", flag.ExitOnError)
 
 	flag.Usage = func() {
 		fmt.Println(usage)
@@ -57,6 +63,11 @@ func main() {
 	// first arg is always binary name e.g. /tmp/go-build3122800919/b001/exe/main
 	switch os.Args[1] {
 	case "route":
+		if !hasPrivilegedAccess() {
+			fmt.Println("This command requires privileged access! Try with 'sudo'.")
+			os.Exit(1)
+		}
+
 		routeCmd.Parse(os.Args[2:])
 		if routeCmd.NArg() == 0 {
 			flag.Usage()
@@ -67,7 +78,16 @@ func main() {
 		traceRoute(host, hops, retries, timeout)
 
 	case "myip":
+		ipv4 := myipCmd.Bool("ipv4", false, "print ipv4 address only")
+		myipCmd.Parse(os.Args[2:])
+
 		pubIPv4, pubIPv6, loc := tracer.PublicIP()
+
+		if *ipv4 {
+			fmt.Println(pubIPv4)
+			return
+		}
+
 		fmt.Println("--- Your Public IP ---")
 		fmt.Println("IPv4 - ", pubIPv4)
 		fmt.Println("IPv6 - ", pubIPv6)
@@ -77,10 +97,19 @@ func main() {
 		flag.Usage()
 
 	default:
-		fmt.Printf("unknown command '%v', run 'trace -help' for command usage\n", os.Args[1])
+		fmt.Printf("unknown command '%v', run 'gotrace -help' for command usage\n", os.Args[1])
 		os.Exit(1)
 	}
 
+}
+
+func hasPrivilegedAccess() bool {
+	currentUser, err := user.Current()
+	if err != nil {
+		return false
+	}
+	// UID '0' means root user
+	return currentUser.Uid == "0"
 }
 
 func traceRoute(host string, hops, retries, timeout *int) {
