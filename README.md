@@ -11,7 +11,7 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
   ```
   _You can find the binaries [HERE](https://github.com/nirdosh17/tracer/releases/latest)._
 
-  **Examples:**
+  **Commands:**
   ```bash
   # tracing requires privileged access
   sudo gotrace example.com
@@ -21,21 +21,37 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 
   # get your public ip
   gotrace myip
-
-  # view command details
-  gotrace -help
   ```
 
   **Get public IP:**
+  
+  ```js
+  $ gotrace myip
+  --- Your Public IP ---
+  IPv4 -  101.129.138.66
+  IPv6 -  2404:7c00:41:50ce:755f:69d3:c890:604b
+   Org -  TELIANET (United States)
 
-  ![Get IP](https://github.com/nirdosh17/tracer/assets/5920689/facec0bd-e9ee-4cc4-b182-e3444f2f95b5)
+  $ gotrace myip --ipv4
+  101.129.138.66
+  ```
 
   **Trace route:**
 
-  ![Traceroute](https://github.com/nirdosh17/tracer/assets/5920689/7429ca7c-9b2b-4691-8aec-e22ddc5dc858)
+```js
+sudo gotrace route example.com
+tracing example.com (93.184.215.14), 64 hops max, max retries: 2
+1.   192.168.101.1    private range    3.709ms
+2.   62.115.42.118    Arelion Sweden AB (Germany)    172.783ms
+3.   62.115.124.56    TELIANET (France)    193.725ms
+4.   62.115.112.242    TELIANET (United States)    285.389ms
+5.   62.115.123.125    TELIANET (United States)    288.032ms
+6.   213.248.83.119    Arelion Sweden AB (United States)    261.788ms
+7.   152.195.65.153    Edgecast Inc. (United States)    581.99ms
+8.   93.184.215.14    Edgecast Inc. (United Kingdom)    286.464ms
+```
 
-
-### 2. Use as a lib
+### 2. Package
   Install Package:
   ```bash
   go get github.com/nirdosh17/tracer
