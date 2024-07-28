@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
 	"sync"
 
 	"github.com/nirdosh17/tracer"
@@ -62,6 +63,11 @@ func main() {
 	// first arg is always binary name e.g. /tmp/go-build3122800919/b001/exe/main
 	switch os.Args[1] {
 	case "route":
+		if !hasPrivilegedAccess() {
+			fmt.Println("This command requires privileged access! Try with 'sudo'.")
+			os.Exit(1)
+		}
+
 		routeCmd.Parse(os.Args[2:])
 		if routeCmd.NArg() == 0 {
 			flag.Usage()
@@ -95,6 +101,15 @@ func main() {
 		os.Exit(1)
 	}
 
+}
+
+func hasPrivilegedAccess() bool {
+	currentUser, err := user.Current()
+	if err != nil {
+		return false
+	}
+	// UID '0' means root user
+	return currentUser.Uid == "0"
 }
 
 func traceRoute(host string, hops, retries, timeout *int) {
