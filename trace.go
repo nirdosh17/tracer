@@ -3,6 +3,7 @@ package tracer
 import (
 	"fmt"
 	"net"
+	"strings"
 	"syscall"
 	"time"
 
@@ -99,22 +100,24 @@ func (t Tracer) Run(host string, traces chan Hop) (NetworkTrace, error) {
 		elapsedTime := time.Since(now)
 
 		packetAddr := recv.packetAddr.String()
-		if recv.destIP == destIP.IP.String() {
-			hop := Hop{
-				TTL:         ttl,
-				Addr:        packetAddr,
-				Location:    locateIP(packetAddr),
-				ElapsedTime: elapsedTime,
-			}
-
-			// push to channel for live updates
-			traces <- hop
-			nHops = append(nHops, hop)
-			// reset retry for next operation
-			retries = 0
+		// Extract only the IP part
+		ipOnly := strings.Split(packetAddr, ":")[0]
+		hop := Hop{
+			TTL:         ttl,
+			Addr:        ipOnly,
+			Location:    locateIP(ipOnly),
+			ElapsedTime: elapsedTime,
 		}
 
-		if packetAddr == recv.destIP {
+		// push to channel for live updates
+		traces <- hop
+		nHops = append(nHops, hop)
+
+		// reset retry for next operation
+		retries = 0
+
+		// Check if we've reached the destination
+		if ipOnly == destIP.String() {
 			break
 		}
 
@@ -145,15 +148,14 @@ func (t Tracer) sendUDPPacket(addr string, ttl int) error {
 	}
 	defer conn.Close()
 
-	// Set the TTL
+	// Replace the raw socket control with this:
 	rawConn, err := conn.SyscallConn()
 	if err != nil {
 		return err
 	}
-
 	err = rawConn.Control(func(fd uintptr) {
 		if udpAddr.IP.To4() != nil {
-			err = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TTL, ttl)
+			err = ipv4.NewConn(conn).SetTTL(ttl)
 		} else {
 			err = syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IPV6, syscall.IPV6_UNICAST_HOPS, ttl)
 		}
@@ -173,7 +175,9 @@ func (t Tracer) sendUDPPacket(addr string, ttl int) error {
 // Filter outs unknown messages using caller IP.
 func (t Tracer) listenICMPMessages() (icmpResp, error) {
 	defaultResp := icmpResp{}
-	c, err := net.ListenPacket("ip4:icmp", "0.0.0.0")
+
+	// Use "udp4" instead of "ip4:icmp"
+	c, err := icmp.ListenPacket("udp4", "0.0.0.0")
 	if err != nil {
 		return icmpResp{}, fmt.Errorf("failed to listen icmp %v", err)
 	}

@@ -7,7 +7,7 @@ test: ## test tracer with example.com
 	@echo "-----------------------------------------------------\n"
 	@go run cmd/gotrace/*.go myip
 	@echo "\n-----------------------------------------------------"
-	@sudo go run cmd/gotrace/*.go route example.com
+	@go run cmd/gotrace/*.go route example.com
 
 help: ## show this help
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ": "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
