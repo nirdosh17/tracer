@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/user"
 	"sync"
 
 	"github.com/nirdosh17/tracer"
+	"github.com/olekukonko/tablewriter"
 )
 
 var colorReset = "\033[0m"
@@ -16,10 +16,8 @@ var colorGreen = "\033[32m"
 var usage = `
 Usage:
 
-	1. Tracing route requires privileged access to analyze raw ICMP packets.
-	   Make sure to run the command as administrator.
-
-		` + colorGreen + `sudo gotrace route [-hops] [-timeout] host` + colorReset + `
+	1. Trace route to a host
+		` + colorGreen + `gotrace route [-hops] [-timeout] host` + colorReset + `
 
 	2. Get your public ip
 		` + colorGreen + `gotrace myip` + colorReset + `
@@ -27,14 +25,14 @@ Usage:
 Examples:
 
 	# trace with default settings, max hops: ` + fmt.Sprintf("%v", tracer.DEFAULT_HOPS) + `, timeout(seconds): ` + fmt.Sprintf("%v", tracer.DEFAULT_TIMEOUT_SECONDS) + `, retries: ` + fmt.Sprintf("%v", tracer.DEFAULT_MAX_RETRIES) + `
-	` + colorGreen + `sudo gotrace route google.com` + colorReset + `
+	` + colorGreen + `gotrace route google.com` + colorReset + `
 
 	# trace 'n' number of hops
-	` + colorGreen + `sudo gotrace route -hops 10 example.com` + colorReset + `
+	` + colorGreen + `gotrace route -hops 10 example.com` + colorReset + `
 
 	# if you are receiving blank response
 	# try increasing the ICMP response timeout(-t) and retries(-r)
-	` + colorGreen + `sudo gotrace route -t 10 -r 5 example.com` + colorReset + `
+	` + colorGreen + `gotrace route -t 10 -r 5 example.com` + colorReset + `
 
 	# get your public ipv4 address with ipv6 and location
 	` + colorGreen + `gotrace myip` + colorReset + `
@@ -63,11 +61,6 @@ func main() {
 	// first arg is always binary name e.g. /tmp/go-build3122800919/b001/exe/main
 	switch os.Args[1] {
 	case "route":
-		if !hasPrivilegedAccess() {
-			fmt.Println("This command requires privileged access! Try with 'sudo'.")
-			os.Exit(1)
-		}
-
 		routeCmd.Parse(os.Args[2:])
 		if routeCmd.NArg() == 0 {
 			flag.Usage()
@@ -88,10 +81,13 @@ func main() {
 			return
 		}
 
-		fmt.Println("--- Your Public IP ---")
-		fmt.Println("IPv4 - ", pubIPv4)
-		fmt.Println("IPv6 - ", pubIPv6)
-		fmt.Println(" Org - ", loc)
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetAutoWrapText(false)
+		table.SetAutoFormatHeaders(true)
+		table.Append([]string{"IPv4", pubIPv4})
+		table.Append([]string{"IPv6", pubIPv6})
+		table.Append([]string{"Location", loc})
+		table.Render()
 
 	case "-h", "-help":
 		flag.Usage()
@@ -101,15 +97,6 @@ func main() {
 		os.Exit(1)
 	}
 
-}
-
-func hasPrivilegedAccess() bool {
-	currentUser, err := user.Current()
-	if err != nil {
-		return false
-	}
-	// UID '0' means root user
-	return currentUser.Uid == "0"
 }
 
 func traceRoute(host string, hops, retries, timeout *int) {
