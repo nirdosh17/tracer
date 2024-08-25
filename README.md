@@ -23,23 +23,25 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
   gotrace myip
   ```
 
-  **Get public IP:**
-  
-  ```js
-  $ gotrace myip
-  --- Your Public IP ---
-  IPv4 -  101.129.138.66
-  IPv6 -  2404:7c00:41:50ce:755f:69d3:c890:604b
-   Org -  TELIANET (United States)
+  **Get your public IP:**
 
+  ```bash
+  $ gotrace myip
+  +----------+----------------------------------------+
+  | IPv4     | 101.129.138.66                         |
+  | IPv6     | 2404:7c00:41:50ce:755f:69d3:c890:604b  |
+  | Location | TELIANET (United States)               |
+  +----------+----------------------------------------+
+
+  # just get ipv4
   $ gotrace myip --ipv4
   101.129.138.66
   ```
 
   **Trace route:**
 
-```js
-sudo gotrace route example.com
+```bash
+$ gotrace route example.com
 tracing example.com (93.184.215.14), 64 hops max, max retries: 2
 1.   192.168.101.1    private range    3.709ms
 2.   62.115.42.118    Arelion Sweden AB (Germany)    172.783ms
