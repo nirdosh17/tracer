@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"net"
@@ -11,6 +12,9 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+//go:embed .version
+var Version string
+
 var colorReset = "\033[0m"
 var colorGreen = "\033[32m"
 var usage = `
@@ -18,9 +22,12 @@ Usage:
 
 	1. Trace route to a host
 		` + colorGreen + `gotrace route [-hops] [-timeout] host` + colorReset + `
-
 	2. Get your public ip
 		` + colorGreen + `gotrace myip` + colorReset + `
+	3. Help
+		` + colorGreen + `gotrace -h` + colorReset + `
+	4. Version
+		` + colorGreen + `gotrace -v` + colorReset + `
 
 Examples:
 
@@ -91,6 +98,9 @@ func main() {
 
 	case "-h", "-help":
 		flag.Usage()
+
+	case "-v", "-version":
+		fmt.Printf("gotrace version %v\n", Version)
 
 	default:
 		fmt.Printf("unknown command '%v', run 'gotrace -help' for command usage\n", os.Args[1])

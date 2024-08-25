@@ -1,4 +1,5 @@
 # This is a GoReleaser config file. Learn more here: https://goreleaser.com
+# testing the builds locally: goreleaser build --snapshot --clean
 version: 2
 
 before:
@@ -7,8 +8,7 @@ before:
 
 builds:
   - main: ./cmd/gotrace
-    # binary name
-    binary: gotrace
+    binary: gotrace # binary name
     env:
       - CGO_ENABLED=0
     goos:
