@@ -13,10 +13,10 @@ Makes UDP call to target host increasing the TTL(hops) of IP packet and recordin
 
   **Commands:**
   ```bash
-  # trace route to a host
-  gotrace example.com
+  # trace route
+  gotrace route example.com
 
-  # with options (max hops, timeout, retries)
+  # trace route with options (max hops, timeout, retries)
   gotrace route -hops 5 -t 5 -r 5 example.com
 
   # get your public ip
